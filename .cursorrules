@@ -1,0 +1,102 @@
+{
+  "javascript": {
+    "formatter": "prettier",
+    "formatterOptions": {
+      "printWidth": 100,
+      "tabWidth": 2,
+      "useTabs": false,
+      "semi": true,
+      "singleQuote": true,
+      "trailingComma": "es5",
+      "bracketSpacing": true,
+      "arrowParens": "avoid"
+    }
+  },
+  "vue": {
+    "formatter": "prettier",
+    "formatterOptions": {
+      "printWidth": 100,
+      "tabWidth": 2,
+      "useTabs": false,
+      "semi": true,
+      "singleQuote": true,
+      "trailingComma": "es5",
+      "bracketSpacing": true,
+      "arrowParens": "avoid"
+    }
+  },
+  "css": {
+    "formatter": "prettier",
+    "formatterOptions": {
+      "printWidth": 100,
+      "tabWidth": 2,
+      "useTabs": false
+    }
+  },
+  "markdown": {
+    "formatter": "prettier",
+    "formatterOptions": {
+      "printWidth": 100,
+      "proseWrap": "always"
+    }
+  },
+  "json": {
+    "formatter": "prettier",
+    "formatterOptions": {
+      "printWidth": 100,
+      "tabWidth": 2,
+      "useTabs": false
+    }
+  },
+  "formatOnSave": true,
+  "defaultFormatter": "prettier",
+  "linter": {
+    "javascript": "eslint",
+    "vue": "eslint"
+  },
+  "exclude": [
+    "node_modules/**",
+    "dist/**",
+    ".git/**",
+    "public/**",
+    "build/**"
+  ],
+  "apiDocRules": {
+    "required": true,
+    "template": {
+      "接口名称": "必填",
+      "接口路径": "必填",
+      "请求方法": "必填 (GET/POST/PUT/DELETE)",
+      "请求参数": {
+        "参数名": "必填",
+        "类型": "必填",
+        "是否必填": "必填 (true/false)",
+        "描述": "必填",
+        "示例": "必填"
+      },
+      "响应参数": {
+        "参数名": "必填",
+        "类型": "必填",
+        "描述": "必填",
+        "示例": "必填"
+      },
+      "错误码": {
+        "状态码": "必填",
+        "描述": "必填",
+        "示例": "必填"
+      }
+    },
+    "location": "大纲/设计文档.md"
+  },
+  "featureDocRules": {
+    "required": true,
+    "template": {
+      "功能名称": "必填",
+      "功能描述": "必填",
+      "功能模块": "必填",
+      "相关组件": "必填",
+      "技术要点": "必填"
+    },
+    "location": "大纲/设计文档.md"
+  }
+} 
