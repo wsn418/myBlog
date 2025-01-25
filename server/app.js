@@ -6,12 +6,14 @@ const path = require('path')
 // 导入路由
 const dailyRoutes = require('./routes/daily')
 const articleRoutes = require('./routes/article')
+const commentRoutes = require('./routes/comment')
 
 const app = express()
 
 // 中间件
 app.use(cors())
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 // 连接数据库
 mongoose.connect('mongodb://127.0.0.1:27017/myblog', {
@@ -26,6 +28,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/myblog', {
 // 注册路由
 app.use('/api/daily', dailyRoutes)
 app.use('/api/articles', articleRoutes)
+app.use('/api/comments', commentRoutes)
 
 // 错误处理中间件
 app.use((err, req, res, next) => {

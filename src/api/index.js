@@ -43,4 +43,16 @@ export const articleApi = {
   }
 }
 
+export const commentApi = {
+  // 获取评论列表
+  getList(params) {
+    return api.get('/api/comments', { params })
+  },
+  
+  // 发表评论
+  create(data) {
+    return api.post('/api/comments', data)
+  }
+}
+
 export default api 

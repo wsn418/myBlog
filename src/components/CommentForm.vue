@@ -1,5 +1,5 @@
 <template>
-  <div class="comment-form">
+  <div class="comment-form" @click.stop>
     <div class="form-container">
       <div class="avatar">
         <el-icon v-if="!avatarUrl" class="default-avatar"><UserFilled /></el-icon>
@@ -30,30 +30,60 @@
           
           <div class="toolbar">
             <div class="left-tools">
-              <el-button class="tool-btn emoji-btn" @click="showEmojiPicker = !showEmojiPicker">
-                😊
-              </el-button>
+              <el-popover
+                placement="bottom"
+                :width="200"
+                trigger="click"
+                popper-class="emoji-popover"
+                @click.stop
+              >
+                <template #reference>
+                  <el-button 
+                    class="tool-btn emoji-btn"
+                    @click.stop
+                  >
+                    😊
+                  </el-button>
+                </template>
+                <div 
+                  class="emoji-grid"
+                  @click.stop
+                >
+                  <span
+                    v-for="emoji in emojiList"
+                    :key="emoji"
+                    class="emoji-item"
+                    @click.stop="insertEmoji(emoji)"
+                  >
+                    {{ emoji }}
+                  </span>
+                </div>
+              </el-popover>
               <el-upload
                 action="/api/upload"    
                 :show-file-list="false"
                 :on-success="handleImageSuccess"
                 accept="image/*"
                 class="upload-btn"
+                @click.stop
               >
-                <el-button class="tool-btn">
+                <el-button 
+                  class="tool-btn"
+                  @click.stop
+                >
                   <el-icon class="tool-icon"><PictureFilled /></el-icon>
                 </el-button>
               </el-upload>
             </div>
             <div class="right-tools">
               <span class="word-count">{{ content.length }}/500</span>
-              <el-button type="primary" class="submit-btn" @click="submitComment">发送</el-button>
-            </div>
-          </div>
-          
-          <div v-if="showEmojiPicker" class="emoji-picker">
-            <div v-for="emoji in emojiList" :key="emoji" @click="insertEmoji(emoji)" class="emoji-item">
-              {{ emoji }}
+              <el-button 
+                type="primary" 
+                class="submit-btn" 
+                @click.stop="submitComment"
+              >
+                发送
+              </el-button>
             </div>
           </div>
         </div>
@@ -66,6 +96,7 @@
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { PictureFilled, UserFilled } from '@element-plus/icons-vue';
+import { commentApi } from '../api';
 
 export default {
   name: 'CommentForm',
@@ -92,12 +123,10 @@ export default {
     const website = ref('');
     const content = ref('');
     const avatarUrl = ref(''); // 初始化为空字符串
-    const showEmojiPicker = ref(false);
-
     const emojiList = ['😀', '😂', '🤣', '😊', '😍', '🤔', '😎', '😭', '👍', '❤️'];
 
     // 检查是否为QQ邮箱并获取头像
-    const handleEmailBlur = async () => {
+    const handleEmailBlur = () => {
       const qqMailRegex = /^[1-9][0-9]{4,}@qq\.com$/;
       if (qqMailRegex.test(email.value)) {
         const qq = email.value.split('@')[0];
@@ -109,7 +138,6 @@ export default {
 
     const insertEmoji = (emoji) => {
       content.value += emoji;
-      showEmojiPicker.value = false;
     };
 
     const handleImageSuccess = (res) => {
@@ -129,24 +157,17 @@ export default {
       }
 
       try {
-        const response = await fetch('/api/comments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            targetId: props.targetId,
-            targetType: props.targetType,
-            nickname: nickname.value,
-            email: email.value,
-            website: website.value,
-            content: content.value,
-            avatar: avatarUrl.value
-          }),
+        const res = await commentApi.create({
+          targetId: props.targetId,
+          targetType: props.targetType,
+          nickname: nickname.value,
+          email: email.value,
+          website: website.value,
+          content: content.value
         });
 
-        if (response.ok) {
-          ElMessage.success('评论发送成功！');
+        if (res.code === 0) {
+          ElMessage.success('评论发表成功！');
           emit('submit-success');
           // 清空表单
           nickname.value = '';
@@ -154,10 +175,10 @@ export default {
           website.value = '';
           content.value = '';
         } else {
-          throw new Error('评论发送失败');
+          ElMessage.error(res.message || '评论发表失败');
         }
       } catch (error) {
-        ElMessage.error('评论发送失败，请稍后重试');
+        ElMessage.error('评论发表失败，请稍后重试');
       }
     };
 
@@ -167,7 +188,6 @@ export default {
       website,
       content,
       avatarUrl,
-      showEmojiPicker,
       emojiList,
       handleEmailBlur,
       insertEmoji,
@@ -232,7 +252,8 @@ export default {
 
 .input-item {
   flex: 1;
-  min-width: 200px;  /* 设置最小宽度，触发换行 */
+  /* 设置最小宽度，触发换行 */
+  min-width: 200px;  
   margin-bottom: 8px;  /* 换行后的间距 */
 }
 
@@ -340,21 +361,12 @@ export default {
   padding: 0 16px;
 }
 
-.emoji-picker {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: white;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  padding: 8px;
+.emoji-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
-  z-index: 1000;
-  margin-top: 4px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  width: 200px; /* 添加固定宽度 */
+  gap: 8px;
+  padding: 8px;
+  user-select: none;
 }
 
 .emoji-item {
@@ -363,10 +375,16 @@ export default {
   padding: 4px;
   border-radius: 4px;
   transition: background-color 0.2s;
+  user-select: none;
 }
 
 .emoji-item:hover {
-  background: #f5f7fa;
+  background-color: #f5f7fa;
+}
+
+.emoji-popover {
+  padding: 0;
+  user-select: none;
 }
 
 .upload-btn {
@@ -375,13 +393,5 @@ export default {
 
 .upload-btn :deep(.el-upload) {
   display: block;
-}
-
-.emoji-btn {
-  font-size: 16px;
-  line-height: 1;
-  padding-top: 4px;
-  filter: grayscale(100%);
-  color: #333;
 }
 </style> 

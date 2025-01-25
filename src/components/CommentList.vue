@@ -26,8 +26,8 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import axios from 'axios';
+import { ref, onMounted } from 'vue';
+import { commentApi } from '../api/index';
 
 export default {
   name: 'CommentList',
@@ -49,13 +49,16 @@ export default {
     const fetchComments = async () => {
       loading.value = true;
       try {
-        const response = await axios.get('/api/comments', {
-          params: {
-            targetId: props.targetId,
-            targetType: props.targetType
-          }
+        const res = await commentApi.getList({
+          targetId: props.targetId,
+          targetType: props.targetType
         });
-        comments.value = response.data;
+        
+        if (res.code === 0) {
+          comments.value = res.data;
+        } else {
+          console.error('获取评论失败:', res.message);
+        }
       } catch (error) {
         console.error('获取评论失败:', error);
       } finally {
@@ -77,6 +80,11 @@ export default {
         day: 'numeric'
       });
     };
+
+    // 在组件挂载时获取评论列表
+    onMounted(() => {
+      fetchComments();
+    });
 
     // 暴露方法给父组件
     return {

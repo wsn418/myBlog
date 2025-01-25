@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 
 const commentSchema = new mongoose.Schema({
-  articleId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Article',
+  targetId: {
+    type: String,
     required: true
+  },
+  targetType: {
+    type: String,
+    required: true,
+    enum: ['article', 'daily']
   },
   nickname: {
     type: String,
