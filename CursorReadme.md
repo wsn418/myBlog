@@ -1,22 +1,27 @@
 # 会话总结
 
 ## 主要目的
-修复评论组件中的双击事件错误
+实现评论回复功能，包括后端API和前端界面
 
 ## 完成的主要任务
-1. 添加事件冒泡阻止
-2. 优化事件处理机制
-3. 改进用户交互体验
+1. 修改评论路由支持回复功能
+2. 增强评论列表组件显示回复
+3. 改进评论表单支持回复模式
+4. 实现评论的嵌套展示
 
 ## 关键决策和解决方案
-- 在所有可点击元素上添加 @click.stop
-- 添加 user-select: none 防止文本选择
-- 优化事件处理逻辑
+- 使用parentId关联评论和回复
+- 回复直接显示在原评论下方
+- 统一的评论和回复接口
+- 简洁的回复展示方式
 
 ## 使用的技术栈
+- Express.js
+- MongoDB
 - Vue 3
 - Element Plus
-- CSS 事件处理
 
 ## 修改的文件
-1. src/components/CommentForm.vue 
+1. server/routes/comment.js
+2. src/components/CommentList.vue
+3. src/components/CommentForm.vue 

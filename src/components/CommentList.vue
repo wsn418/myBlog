@@ -6,15 +6,73 @@
     <template v-else>
       <div v-if="comments.length > 0" class="comments">
         <div v-for="comment in comments" :key="comment._id" class="comment-item">
-          <div class="comment-avatar">
+          <div class="comment-header">
             <el-avatar :size="40" :src="comment.avatar" />
+            <div class="comment-info">
+              <div class="nickname">{{ comment.nickname }}</div>
+              <div class="time">{{ formatTime(comment.createdAt) }}</div>
+            </div>
           </div>
           <div class="comment-content">
-            <div class="comment-header">
-              <span class="nickname">{{ comment.nickname }}</span>
-              <span class="time">{{ formatTime(comment.createdAt) }}</span>
+            {{ comment.content }}
+          </div>
+          <div class="comment-actions">
+            <el-button 
+              type="text" 
+              @click="showReplyForm(comment._id)"
+            >
+              回复
+            </el-button>
+          </div>
+
+          <comment-form
+            v-if="activeReplyId === comment._id && !activeReplyParentId"
+            :target-id="targetId"
+            :target-type="targetType"
+            :parent-id="comment._id"
+            :reply-to="activeReplyTo"
+            @submit-success="handleReplySuccess"
+            @cancel-reply="cancelReply"
+          />
+
+          <div v-if="comment.replies?.length" class="reply-list">
+            <div v-for="reply in comment.replies" :key="reply._id" class="reply-item">
+              <div class="reply-header">
+                <el-avatar :size="32" :src="reply.avatar" />
+                <div class="reply-info">
+                  <div class="nickname">{{ reply.nickname }}</div>
+                  <div class="time">{{ formatTime(reply.createdAt) }}</div>
+                </div>
+              </div>
+              <div class="reply-content">
+                <template v-if="reply.parentId && reply.replyTo">
+                  <span class="reply-at">@{{ reply.replyTo.nickname }}</span>
+                  {{ reply.content }}
+                </template>
+                <template v-else>
+                  {{ reply.content }}
+                </template>
+              </div>
+              <div class="reply-actions">
+                <el-button 
+                  type="text" 
+                  @click="showReplyForm(comment._id, reply)"
+                >
+                  回复
+                </el-button>
+              </div>
+
+              <comment-form
+                v-if="activeReplyId === comment._id && activeReplyParentId === reply._id"
+                :target-id="targetId"
+                :target-type="targetType"
+                :parent-id="comment._id"
+                :reply-to="activeReplyTo"
+                @submit-success="handleReplySuccess"
+                @cancel-reply="cancelReply"
+                class="nested-reply-form"
+              />
             </div>
-            <div class="text">{{ comment.content }}</div>
           </div>
         </div>
       </div>
@@ -28,9 +86,14 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { commentApi } from '../api/index';
+import CommentForm from './CommentForm.vue';
+import { formatTime } from '../utils/time';
 
 export default {
   name: 'CommentList',
+  components: {
+    CommentForm
+  },
   props: {
     targetId: {
       type: String,
@@ -45,6 +108,9 @@ export default {
   setup(props) {
     const comments = ref([]);
     const loading = ref(false);
+    const activeReplyId = ref(null);
+    const activeReplyParentId = ref(null);
+    const activeReplyTo = ref(null);
 
     const fetchComments = async () => {
       loading.value = true;
@@ -66,19 +132,32 @@ export default {
       }
     };
 
-    const formatTime = (timestamp) => {
-      const date = new Date(timestamp);
-      const now = new Date();
-      const diff = now - date;
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      
-      if (hours < 24) {
-        return `${hours}小时前`;
+    const showReplyForm = (commentId, reply = null) => {
+      activeReplyId.value = commentId;
+      if (reply) {
+        activeReplyParentId.value = reply._id;
+        activeReplyTo.value = {
+          nickname: reply.nickname,
+          commentId: reply._id
+        };
+      } else {
+        activeReplyParentId.value = null;
+        activeReplyTo.value = {
+          nickname: comments.value.find(c => c._id === commentId)?.nickname,
+          commentId: commentId
+        };
       }
-      return date.toLocaleDateString('zh-CN', {
-        month: 'long',
-        day: 'numeric'
-      });
+    };
+
+    const cancelReply = () => {
+      activeReplyId.value = null;
+      activeReplyParentId.value = null;
+      activeReplyTo.value = null;
+    };
+
+    const handleReplySuccess = () => {
+      cancelReply();
+      fetchComments();
     };
 
     // 在组件挂载时获取评论列表
@@ -90,7 +169,13 @@ export default {
     return {
       comments,
       loading,
+      activeReplyId,
+      activeReplyParentId,
+      activeReplyTo,
       fetchComments,
+      showReplyForm,
+      cancelReply,
+      handleReplySuccess,
       formatTime
     };
   }
@@ -105,47 +190,119 @@ export default {
 .comments {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .comment-item {
-  display: flex;
-  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 4px;
 }
 
-.comment-content {
+.comment-header, .reply-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.comment-info, .reply-info {
   flex: 1;
 }
 
-.comment-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
 .nickname {
+  font-size: 14px;
   font-weight: 500;
   color: #333;
+  line-height: 1.4;
 }
 
 .time {
   font-size: 12px;
   color: #999;
+  margin-top: 2px;
 }
 
-.text {
-  color: #666;
-  line-height: 1.5;
+.comment-content, .reply-content {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+  margin: 8px 0;
+  word-break: break-all;
 }
 
-.no-comments {
+.comment-actions, .reply-actions {
+  margin-top: 8px;
+}
+
+:deep(.el-button--text) {
+  padding: 0;
+  height: auto;
+  font-size: 12px;
+  color: #8590a6;
+}
+
+:deep(.el-button--text:hover) {
+  color: #1890ff;
+}
+
+.reply-list {
+  margin-top: 16px;
+  margin-left: 48px;
+  padding-left: 16px;
+  border-left: 2px solid #f0f0f0;
+}
+
+.reply-item {
+  position: relative;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+.reply-item:last-child {
+  margin-bottom: 0;
+}
+
+.nested-reply-form {
+  margin-top: 12px;
+  margin-left: 32px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.reply-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.reply-info {
+  flex: 1;
+}
+
+.reply-content {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.reply-at {
+  color: #1890ff;
+  margin-right: 4px;
+  font-weight: 500;
+}
+
+.reply-actions {
+  margin-top: 4px;
+}
+
+.loading, .no-comments {
   text-align: center;
+  padding: 24px;
   color: #999;
-  padding: 20px 0;
-}
-
-.loading {
-  padding: 20px 0;
 }
 </style> 

@@ -1,5 +1,13 @@
 <template>
   <div class="comment-form" @click.stop>
+    <!-- 回复模式提示 -->
+    <div v-if="replyTo" class="reply-info">
+      回复 @{{ replyTo.nickname }}：
+      <el-button type="text" class="cancel-reply" @click="$emit('cancel-reply')">
+        取消回复
+      </el-button>
+    </div>
+    
     <div class="form-container">
       <div class="avatar">
         <el-icon v-if="!avatarUrl" class="default-avatar"><UserFilled /></el-icon>
@@ -114,9 +122,17 @@ export default {
       type: String,
       required: true,
       validator: value => ['article', 'daily'].includes(value)
+    },
+    parentId: {
+      type: String,
+      default: null
+    },
+    replyTo: {
+      type: Object,
+      default: null
     }
   },
-  emits: ['submit-success'],
+  emits: ['submit-success', 'cancel-reply'],
   setup(props, { emit }) {
     const nickname = ref('');
     const email = ref('');
@@ -160,6 +176,8 @@ export default {
         const res = await commentApi.create({
           targetId: props.targetId,
           targetType: props.targetType,
+          parentId: props.parentId,
+          replyTo: props.replyTo,
           nickname: nickname.value,
           email: email.value,
           website: website.value,
@@ -167,7 +185,7 @@ export default {
         });
 
         if (res.code === 0) {
-          ElMessage.success('评论发表成功！');
+          ElMessage.success(props.parentId ? '回复发表成功！' : '评论发表成功！');
           emit('submit-success');
           // 清空表单
           nickname.value = '';
@@ -393,5 +411,19 @@ export default {
 
 .upload-btn :deep(.el-upload) {
   display: block;
+}
+
+.reply-info {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #666;
+}
+
+.cancel-reply {
+  float: right;
+  padding: 0;
 }
 </style> 

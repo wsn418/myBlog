@@ -6,10 +6,18 @@ const dailySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  nickname: {
+    type: String,
+    required: true
+  },
+  email: {
+    type: String,
+    required: true
+  },
+  avatar: String,
   createdAt: {
     type: Date,
-    default: Date.now,
-    get: v => v.getTime()
+    default: Date.now
   }
 }, {
   timestamps: true,

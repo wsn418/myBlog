@@ -10,6 +10,17 @@ const commentSchema = new mongoose.Schema({
     required: true,
     enum: ['article', 'daily']
   },
+  parentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Comment'
+  },
+  replyTo: {
+    commentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Comment'
+    },
+    nickname: String
+  },
   nickname: {
     type: String,
     required: true
@@ -23,10 +34,7 @@ const commentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  avatar: {
-    type: String,
-    default: 'https://example.com/default-avatar.png'
-  },
+  avatar: String,
   createdAt: {
     type: Date,
     default: Date.now

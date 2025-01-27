@@ -32,10 +32,11 @@ app.use('/api/comments', commentRoutes)
 
 // 错误处理中间件
 app.use((err, req, res, next) => {
-  console.error('错误:', err.stack)
+  console.error('错误:', err)
   res.status(500).json({
-    message: '服务器内部错误',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    code: -1,
+    message: '服务器错误',
+    error: err.message
   })
 })
 

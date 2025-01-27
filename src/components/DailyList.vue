@@ -57,6 +57,7 @@ import { Share, ChatDotRound } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import CommentForm from './CommentForm.vue'
 import CommentList from './CommentList.vue'
+import { formatTime } from '../utils/time'
 
 export default {
   name: 'DailyList',
@@ -74,14 +75,21 @@ export default {
 
     const fetchDailyItems = async () => {
       try {
-        const data = await dailyApi.getList()
-        dailyItems.value = data.map(item => ({
-          ...item,
-          showComments: false
-        }))
+        isLoading.value = true
+        const response = await dailyApi.getList()
+        if (response && response.code === 0 && Array.isArray(response.data)) {
+          console.log('动态列表时间值:', response.data.map(item => item.createdAt))
+          
+          dailyItems.value = response.data.map(item => ({
+            ...item,
+            showComments: false
+          }))
+        } else {
+          throw new Error(response?.message || '获取动态列表失败')
+        }
       } catch (error) {
         console.error('获取动态列表失败:', error)
-        ElMessage.error('获取动态列表失败')
+        ElMessage.error(error.message || '获取动态列表失败')
       } finally {
         isLoading.value = false
       }
@@ -109,21 +117,6 @@ export default {
       if (commentList) {
         commentList.fetchComments()
       }
-    }
-
-    const formatTime = (timestamp) => {
-      const date = new Date(timestamp)
-      const now = new Date()
-      const diff = now - date
-      const hours = Math.floor(diff / (1000 * 60 * 60))
-      
-      if (hours < 24) {
-        return `${hours}小时前`
-      }
-      return date.toLocaleDateString('zh-CN', {
-        month: 'long',
-        day: 'numeric'
-      })
     }
 
     onMounted(() => {
