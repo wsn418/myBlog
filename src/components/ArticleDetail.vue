@@ -1,34 +1,53 @@
 <template>
-  <div class="article-detail" v-if="article">
-    <h1>{{ article.title }}</h1>
-    <div class="article-meta">
-      <span>发布时间：{{ formatDate(article.createdAt) }}</span>
-    </div>
-    <div class="article-content">
-      {{ article.content }}
-    </div>
-    
-    <!-- 评论区域 -->
-    <div class="comment-section">
-      <h3>评论</h3>
-      <CommentForm 
-        :targetId="article._id"
-        targetType="article"
-        @submit-success="fetchComments"
-      />
-      <CommentList 
-        :targetId="article._id"
-        targetType="article"
-        ref="commentList"
-      />
-    </div>
+  <div class="article-detail">
+    <template v-if="article">
+      <h1 class="article-title">{{ article.title }}</h1>
+      <div class="article-meta">
+        <span class="publish-time">发布时间：{{ formatDate(article.createdAt) }}</span>
+        <span class="word-count">字数：{{ article.wordCount }}</span>
+      </div>
+      <div class="article-content">
+        {{ article.content }}
+      </div>
+      
+      <!-- 简化标签显示区域 -->
+      <div class="article-tags" v-if="article.tags?.length">
+        <el-tag
+          v-for="tag in article.tags"
+          :key="tag"
+          size="small"
+          class="tag-item"
+          @click="handleTagClick(tag)"
+        >
+          #{{ tag }}
+        </el-tag>
+      </div>
+      
+      <!-- 评论区域 -->
+      <div class="article-comments">
+        <h3>评论</h3>
+        <CommentForm 
+          :targetId="article._id"
+          targetType="article"
+          @submit-success="fetchComments"
+        />
+        <CommentList 
+          :targetId="article._id"
+          targetType="article"
+          ref="commentList"
+        />
+      </div>
+    </template>
+    <el-skeleton v-else :rows="10" animated />
   </div>
 </template>
 
 <script>
-import axios from 'axios';
-import CommentForm from './CommentForm.vue';
-import CommentList from './CommentList.vue';
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { articleApi } from '@/api'
+import CommentForm from './CommentForm.vue'
+import CommentList from './CommentList.vue'
 
 export default {
   name: 'ArticleDetail',
@@ -36,32 +55,52 @@ export default {
     CommentForm,
     CommentList
   },
-  data() {
-    return {
-      article: null
-    };
-  },
-  methods: {
-    async fetchArticle() {
-      try {
-        const id = this.$route.params.id;
-        const response = await axios.get(`/api/articles/${id}`);
-        this.article = response.data;
-      } catch (error) {
-        console.error('获取文章详情失败:', error);
-      }
-    },
-    formatDate(date) {
-      return new Date(date).toLocaleDateString('zh-CN');
-    },
-    fetchComments() {
-      this.$refs.commentList?.fetchComments();
+  setup() {
+    const router = useRouter()
+    const route = useRoute()
+    const article = ref(null)
+    const commentList = ref(null)
+
+    const formatDate = (timestamp) => {
+      return new Date(timestamp).toLocaleDateString('zh-CN')
     }
-  },
-  created() {
-    this.fetchArticle();
+
+    const handleTagClick = (tag) => {
+      router.push({
+        path: '/archive',
+        query: { tag }
+      })
+    }
+
+    const fetchArticle = async () => {
+      try {
+        const id = route.params.id
+        const data = await articleApi.getDetail(id)
+        article.value = data
+      } catch (error) {
+        console.error('获取文章详情失败:', error)
+      }
+    }
+
+    const fetchComments = () => {
+      if (commentList.value) {
+        commentList.value.fetchComments()
+      }
+    }
+
+    onMounted(() => {
+      fetchArticle()
+    })
+
+    return {
+      article,
+      commentList,
+      formatDate,
+      handleTagClick,
+      fetchComments
+    }
   }
-};
+}
 </script>
 
 <style scoped>
@@ -71,30 +110,46 @@ export default {
   padding: 20px;
 }
 
-h1 {
+.article-title {
+  font-size: 28px;
   margin-bottom: 20px;
 }
 
 .article-meta {
   color: #666;
   margin-bottom: 30px;
+  display: flex;
+  gap: 20px;
 }
 
 .article-content {
   line-height: 1.8;
-  color: #333;
   margin-bottom: 40px;
 }
 
-.comment-section {
-  margin-top: 40px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
+.article-tags {
+  margin: 30px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.comment-section h3 {
+.tag-item {
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.tag-item:hover {
+  transform: translateY(-2px);
+}
+
+.article-comments {
+  margin-top: 40px;
+}
+
+.article-comments h3 {
   margin-bottom: 20px;
-  font-size: 18px;
+  font-weight: normal;
   color: #333;
 }
 </style> 

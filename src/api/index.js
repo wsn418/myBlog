@@ -53,13 +53,26 @@ export const articleApi = {
   
   // 获取文章详情
   async getDetail(id) {
-    const response = await api.get(`/api/articles/${id}`)
-    return response.data
+    try {
+      console.log('Fetching article detail for id:', id);  // 添加日志
+      const response = await api.get(`/api/articles/${id}`);
+      console.log('Article detail response:', response.data);  // 添加日志
+      return response.data;
+    } catch (error) {
+      console.error('获取文章详情失败:', error);
+      throw error;
+    }
   },
   
   // 发布新文章
   async create(data) {
     const response = await api.post('/api/articles', data)
+    return response.data
+  },
+  
+  // 获取标签统计
+  async getTags() {
+    const response = await api.get('/api/articles/tags')
     return response.data
   }
 }
@@ -75,6 +88,39 @@ export const commentApi = {
   async create(data) {
     const response = await api.post('/api/comments', data)
     return response.data
+  }
+}
+
+export const getArchive = async (params = {}) => {
+  try {
+    console.log('Requesting archive with params:', params)
+    const { year, tag } = params
+    const queryParams = new URLSearchParams()
+    
+    if (year) queryParams.append('year', year)
+    if (tag) queryParams.append('tag', tag)
+    
+    const url = `/api/archive${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+    console.log('Archive request URL:', url)
+    
+    const response = await api.get(url)
+    console.log('Archive response:', response.data)
+    return response.data
+  } catch (error) {
+    console.error('获取归档数据失败:', error)
+    throw error
+  }
+}
+
+// 获取最近6篇文章
+export async function getRecentArticles() {
+  try {
+    const response = await api.get('/api/articles/recent')  // 使用 api 实例而不是 axios
+    console.log('Recent articles response:', response.data) // 添加日志
+    return response.data
+  } catch (error) {
+    console.error('Error fetching recent articles:', error)
+    throw error
   }
 }
 

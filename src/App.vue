@@ -1,41 +1,33 @@
 <template>
-  <div id="app">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <div class="container">
-      <div class="layout">
-        <aside class="sidebar">
-          <div class="site-info">
-            <router-link to="/" class="logo">
-              Counting<br>
-              Stars💫
-            </router-link>
-            <p class="slogan">
-              🌩️🌩️🌩️莫思身外无穷事，<br>
-              且尽生前有限杯。
-            </p>
-          </div>
-          <nav class="nav-menu">
-            <router-link to="/daily" class="nav-link">日常</router-link>
-            <router-link to="/" class="nav-link">首页</router-link>
-            <router-link to="/archive" class="nav-link">归档</router-link>
-            <router-link to="/new-article" class="nav-link">发布</router-link>
-            <router-link to="/about" class="nav-link">关于</router-link>
-          </nav>
-          <footer class="footer">
-            <p>© My Blog | Since 2024</p>
-          </footer>
-        </aside>
-        <main class="main-content">
-          <div class="mobile-header">
-            <router-link to="/" class="mobile-logo">Counting Stars💫</router-link>
-            <div class="menu-toggle">✕ ☰ Menu</div>
-          </div>
-          <div class="content-wrapper">
-            <router-view></router-view>
-          </div>
-        </main>
+  <div class="app-container">
+    <nav class="nav-menu">
+      <div class="site-info">
+        <router-link to="/" class="logo">
+          Counting<br>
+          Stars💫
+        </router-link>
+        <p class="slogan">
+          🌩️🌩️🌩️莫思身外无穷事，<br>
+          且尽生前有限杯。
+        </p>
       </div>
-    </div>
+      <router-link to="/daily" class="nav-link">日常</router-link>
+      <!-- <router-link to="/" class="nav-link">首页</router-link> -->
+      <router-link to="/archive" class="nav-link">归档</router-link>
+      <!-- <router-link to="/new-article" class="nav-link">发布</router-link> -->
+      <router-link to="/about" class="nav-link">关于</router-link>
+      <footer class="footer">
+        <p>© My Blog | Since 2024</p>
+      </footer>
+    </nav>
+    
+    <main class="main-content">
+      <div class="mobile-header">
+        <router-link to="/" class="mobile-logo">Counting Stars💫</router-link>
+        <div class="menu-toggle">✕ ☰ Menu</div>
+      </div>
+      <router-view></router-view>
+    </main>
   </div>
 </template>
 
@@ -299,5 +291,63 @@ button {
 p:lang(en), 
 .english {
   font-family: 'Quicksand', var(--main-font);
+}
+
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  max-width: 1400px;  /* 限制最大宽度 */
+  margin: 0 auto;     /* 居中显示 */
+}
+
+.nav-menu {
+  width: 40%;        /* 导航栏占 40% */
+  max-width: 400px;  /* 限制最大宽度 */
+  padding: 40px;
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex-shrink: 0;    /* 防止导航栏被压缩 */
+}
+
+.main-content {
+  flex: 1;           /* 主内容区域占剩余空间 */
+  min-width: 0;      /* 防止内容溢出 */
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-header {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .nav-menu {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    padding: 20px;
+    position: static;
+  }
+
+  .main-content {
+    padding: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
 }
 </style>

@@ -10,12 +10,7 @@ module.exports = defineConfig({
         pathRewrite: {
           '^/api': '/api'
         },
-        onError: (err, req, res) => {
-          console.log('代理错误:', err);
-        },
-        onProxyReq: (proxyReq, req, res) => {
-          console.log('代理请求:', req.method, req.url);
-        }
+        logLevel: 'debug'
       }
     }
   }

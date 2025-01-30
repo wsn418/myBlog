@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import store from './store'
 import '@fortawesome/fontawesome-free/css/all.css'
 
 // 引入 Element Plus
@@ -15,6 +16,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
+app.use(store)
 app.use(router)
 app.use(ElementPlus)
 app.mount('#app')
