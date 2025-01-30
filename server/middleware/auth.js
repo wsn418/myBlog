@@ -1,29 +1,27 @@
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config');
 
-const authMiddleware = (req, res, next) => {
+const auth = (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    const token = req.headers.authorization?.split(' ')[1];
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return res.status(401).json({
         code: -1,
-        message: '未授权或 token 格式错误'
+        message: '未提供认证令牌'
       });
     }
 
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, 'your-jwt-secret-key');
-    
-    // 将解码后的用户信息添加到请求对象中
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error('认证失败:', error);
     res.status(401).json({
       code: -1,
-      message: 'token 无效或已过期'
+      message: '认证失败'
     });
   }
 };
 
-module.exports = authMiddleware; 
+module.exports = { auth }; 

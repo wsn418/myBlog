@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Comment = require('../models/Comment');
 const mongoose = require('mongoose');
+const { auth } = require('../middleware/auth');
 
 // 获取评论列表
 router.get('/', async (req, res) => {
@@ -134,6 +135,37 @@ router.post('/', async (req, res) => {
       code: -1,
       message: '评论发表失败',
       error: error.message
+    });
+  }
+});
+
+// 删除评论及其所有回复
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const commentId = req.params.id;
+    
+    // 先删除所有子评论
+    await Comment.deleteMany({ parentId: commentId });
+    
+    // 删除评论本身
+    const comment = await Comment.findByIdAndDelete(commentId);
+    
+    if (!comment) {
+      return res.status(404).json({
+        code: -1,
+        message: '评论不存在'
+      });
+    }
+    
+    res.json({
+      code: 0,
+      message: '删除成功'
+    });
+  } catch (error) {
+    console.error('删除评论失败:', error);
+    res.status(500).json({
+      code: -1,
+      message: '删除评论失败'
     });
   }
 });

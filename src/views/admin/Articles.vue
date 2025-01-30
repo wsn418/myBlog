@@ -46,33 +46,70 @@
         </template>
       </el-table-column>
       
-      <el-table-column label="操作" width="150" fixed="right">
+      <el-table-column label="操作" width="250">
         <template #default="{ row }">
-          <el-button 
-            link
-            type="primary" 
-            @click="handleEdit(row)"
-          >
+          <el-button type="primary" link @click="handleEdit(row.id)">
             编辑
           </el-button>
-          <el-button 
-            link
-            type="danger" 
-            @click="handleDelete(row)"
-          >
+          <el-button type="primary" link @click="handleComments(row)">
+            评论管理
+          </el-button>
+          <el-button type="danger" link @click="handleDelete(row.id)">
             删除
           </el-button>
         </template>
       </el-table-column>
     </el-table>
+
+    <!-- 评论管理对话框 -->
+    <el-dialog
+      v-model="commentDialogVisible"
+      :title="`评论管理 - ${currentArticle?.title}`"
+      width="70%"
+    >
+      <el-table
+        :data="comments"
+        v-loading="commentsLoading"
+        row-key="_id"
+      >
+        <el-table-column prop="nickname" label="评论者" width="120" />
+        <el-table-column label="评论内容">
+          <template #default="{ row }">
+            <div :style="{ paddingLeft: row.parentId ? '40px' : '0' }">
+              <span v-if="row.parentId" class="reply-prefix">
+                回复 @{{ row.replyTo?.nickname }}：
+              </span>
+              {{ row.content }}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="评论时间" width="180">
+          <template #default="{ row }">
+            {{ formatTime(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button 
+              type="danger" 
+              link
+              @click="handleDeleteComment(row._id)"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { articleApi } from '@/api'
+import { articleApi, commentApi } from '@/api'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatTime } from '@/utils/time'
 
 export default {
   name: 'ArticlesPage',
@@ -80,6 +117,12 @@ export default {
     const router = useRouter()
     const articles = ref([])
     const loading = ref(false)
+
+    // 评论管理相关
+    const commentDialogVisible = ref(false)
+    const comments = ref([])
+    const commentsLoading = ref(false)
+    const currentArticle = ref(null)
 
     // 获取文章列表
     const fetchArticles = async () => {
@@ -108,9 +151,7 @@ export default {
     }
 
     // 编辑文章
-    const handleEdit = (article) => {
-      // 确保使用正确的 ID 字段
-      const articleId = article._id || article.id
+    const handleEdit = (articleId) => {
       if (!articleId) {
         ElMessage.error('无效的文章ID')
         return
@@ -119,7 +160,7 @@ export default {
     }
 
     // 删除文章
-    const handleDelete = async (article) => {
+    const handleDelete = async (articleId) => {
       try {
         await ElMessageBox.confirm(
           '确定要删除这篇文章吗？',
@@ -131,7 +172,7 @@ export default {
           }
         )
         
-        const response = await articleApi.delete(article._id)
+        const response = await articleApi.delete(articleId)
         if (response.code === 0) {
           ElMessage.success('删除成功')
           await fetchArticles()
@@ -146,6 +187,62 @@ export default {
       }
     }
 
+    // 评论管理
+    const handleComments = async (article) => {
+      currentArticle.value = article
+      commentDialogVisible.value = true
+      await fetchComments(article.id)
+    }
+
+    const fetchComments = async (articleId) => {
+      commentsLoading.value = true
+      try {
+        const res = await commentApi.getList({
+          targetId: articleId,
+          targetType: 'article'
+        })
+        if (res.code === 0) {
+          // 将评论列表扁平化，包含父评论和子评论
+          const flatComments = []
+          res.data.forEach(comment => {
+            flatComments.push(comment)
+            if (comment.replies?.length) {
+              flatComments.push(...comment.replies)
+            }
+          })
+          comments.value = flatComments
+        }
+      } catch (error) {
+        console.error('获取评论列表失败:', error)
+        ElMessage.error('获取评论列表失败')
+      } finally {
+        commentsLoading.value = false
+      }
+    }
+
+    const handleDeleteComment = async (commentId) => {
+      try {
+        await ElMessageBox.confirm(
+          '确定要删除这条评论吗？如果是父评论，其下的所有回复也会被删除。',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
+        
+        await commentApi.delete(commentId)
+        ElMessage.success('删除成功')
+        await fetchComments(currentArticle.value.id)
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('删除评论失败:', error)
+          ElMessage.error('删除失败，请重试')
+        }
+      }
+    }
+
     onMounted(() => {
       fetchArticles()
     })
@@ -155,7 +252,14 @@ export default {
       loading,
       handleCreate,
       handleEdit,
-      handleDelete
+      handleDelete,
+      commentDialogVisible,
+      comments,
+      commentsLoading,
+      currentArticle,
+      handleComments,
+      handleDeleteComment,
+      formatTime
     }
   }
 }
@@ -193,5 +297,16 @@ export default {
 
 .tag-item:last-child {
   margin-right: 0;
+}
+
+.reply-prefix {
+  color: #1890ff;
+  margin-right: 4px;
+}
+
+.el-dialog :deep(.el-dialog__body) {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 </style> 

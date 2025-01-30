@@ -7,6 +7,7 @@ import ArchivePage from '../views/Archive.vue';
 import Home from '@/views/Home.vue';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
+import CommentsManage from '@/views/admin/Comments.vue'
 
 NProgress.configure({ 
   showSpinner: false,  // 不显示加载圈
@@ -99,6 +100,15 @@ const routes = [
         path: 'change-password',
         name: 'AdminChangePassword',
         component: () => import('@/views/admin/ChangePassword.vue')
+      },
+      {
+        path: 'comments',
+        name: 'CommentsManage',
+        component: CommentsManage,
+        meta: {
+          title: '评论管理',
+          requiresAuth: true
+        }
       }
     ]
   },

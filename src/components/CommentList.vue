@@ -12,17 +12,17 @@
               <div class="nickname">{{ comment.nickname }}</div>
               <div class="time">{{ formatTime(comment.createdAt) }}</div>
             </div>
+            <div class="comment-actions">
+              <el-button 
+                type="text" 
+                @click="showReplyForm(comment._id)"
+              >
+                回复
+              </el-button>
+            </div>
           </div>
           <div class="comment-content">
             {{ comment.content }}
-          </div>
-          <div class="comment-actions">
-            <el-button 
-              type="text" 
-              @click="showReplyForm(comment._id)"
-            >
-              回复
-            </el-button>
           </div>
 
           <comment-form
@@ -308,5 +308,14 @@ export default {
   text-align: center;
   padding: 24px;
   color: #999;
+}
+
+.delete-btn {
+  color: #ff4d4f;
+  margin-left: 8px;
+}
+
+.delete-btn:hover {
+  color: #ff7875;
 }
 </style> 

@@ -159,6 +159,12 @@ export const commentApi = {
   async create(data) {
     const response = await api.post('/comments', data)
     return response.data
+  },
+  
+  // 删除评论
+  delete: async (commentId) => {
+    const response = await api.delete(`/comments/${commentId}`)
+    return response.data
   }
 }
 
