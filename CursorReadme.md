@@ -287,3 +287,36 @@
 1. server/routes/article.js - 添加字数计算
 2. server/routes/archive.js - 优化字数统计
 3. server/scripts/updateWordCount.js - 新增迁移脚本
+
+# 会话总结 - 后台管理系统登录页面和权限控制系统
+
+## 主要目的
+实现后台管理系统的登录页面和权限控制系统
+
+## 完成的主要任务
+1. 设计并实现了登录页面组件
+2. 实现了用户状态管理
+3. 添加了路由守卫进行权限控制
+4. 创建了权限指令用于控制UI元素的显示
+5. 设计并添加了登录相关的API接口
+
+## 关键决策和解决方案
+- 使用JWT进行身份认证
+- 采用基于角色的权限控制系统
+- 实现了权限指令用于细粒度的UI控制
+- 使用Pinia进行状态管理
+
+## 使用的技术栈
+- Vue 3
+- Vue Router
+- Pinia
+- Element Plus
+- JWT
+
+## 修改的文件
+1. 大纲/设计文档.md - 添加了权限系统设计文档
+2. src/views/admin/Login.vue - 新建登录页面组件
+3. src/stores/user.js - 新建用户状态管理
+4. src/router/index.js - 添加路由守卫
+5. src/directives/permission.js - 新建权限指令
+6. src/api/index.js - 添加登录相关API接口

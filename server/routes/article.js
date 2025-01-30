@@ -11,68 +11,95 @@ router.get('/recent', async (req, res) => {
       .select('title createdAt tags')
       .lean()
 
-    // 格式化日期
+    // 格式化数据
     const formattedArticles = articles.map(article => ({
-      ...article,
-      id: article._id, // 确保返回 id 字段
+      id: article._id,
+      title: article.title,
+      tags: article.tags || [],
       createdAt: new Date(article.createdAt).toISOString().split('T')[0]
     }))
 
-    console.log('Sending recent articles:', formattedArticles) // 添加日志
-    res.json({ articles: formattedArticles })
+    console.log('Sending recent articles:', formattedArticles)
+    res.json({
+      code: 0,
+      data: formattedArticles
+    })
   } catch (error) {
     console.error('Error fetching recent articles:', error)
-    res.status(500).json({ error: 'Internal server error' })
+    res.status(500).json({
+      code: -1,
+      message: '获取最近文章失败'
+    })
   }
 })
 
 // 获取文章列表
 router.get('/', async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1
-    const pageSize = parseInt(req.query.pageSize) || 10
-    const skip = (page - 1) * pageSize
-
+    res.set('Cache-Control', 'no-store')
+    
     const articles = await Article.find()
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(pageSize)
-
-    const total = await Article.countDocuments()
-    const hasNextPage = total > skip + articles.length
-
+      .lean()
+    
+    // 格式化数据
+    const formattedArticles = articles.map(article => ({
+      id: article._id,
+      title: article.title,
+      content: article.content,
+      tags: article.tags || [],
+      wordCount: article.wordCount || 0,
+      createdAt: new Date(article.createdAt).toISOString(),
+      updatedAt: new Date(article.updatedAt).toISOString()
+    }))
+    
     res.json({
-      articles,
-      hasNextPage,
-      total
+      code: 0,
+      data: formattedArticles
     })
   } catch (error) {
     console.error('获取文章列表失败:', error)
-    res.status(500).json({ message: '获取文章列表失败' })
+    res.status(500).json({
+      code: -1,
+      message: '获取文章列表失败'
+    })
   }
 })
 
-// 获取单篇文章
+// 获取文章详情
 router.get('/:id', async (req, res) => {
   try {
-    console.log('Fetching article with id:', req.params.id);  // 添加日志
-    const article = await Article.findById(req.params.id)
-      .select('title content createdAt updatedAt tags wordCount')  // 确保选择所有需要的字段
-      .lean();
-      
+    res.set('Cache-Control', 'no-store')
+    
+    const article = await Article.findById(req.params.id).lean()
     if (!article) {
-      console.log('Article not found');  // 添加日志
-      return res.status(404).json({ message: '文章不存在' });
+      return res.status(404).json({
+        code: -1,
+        message: '文章不存在'
+      })
     }
-
-    console.log('Found article:', article);  // 添加日志
-    res.json(article);
+    
+    // 格式化数据
+    const formattedArticle = {
+      id: article._id,
+      title: article.title,
+      content: article.content,
+      tags: article.tags || [],
+      wordCount: article.wordCount || 0,
+      createdAt: new Date(article.createdAt).toISOString(),
+      updatedAt: new Date(article.updatedAt).toISOString()
+    }
+    
+    res.json({
+      code: 0,
+      data: formattedArticle
+    })
   } catch (error) {
-    console.error('获取文章详情失败:', error);
-    res.status(500).json({ 
-      message: '获取文章详情失败',
-      error: error.message 
-    });
+    console.error('获取文章详情失败:', error)
+    res.status(500).json({
+      code: -1,
+      message: '获取文章详情失败'
+    })
   }
 })
 
@@ -81,21 +108,38 @@ router.post('/', async (req, res) => {
   try {
     const { title, content, tags } = req.body
     
-    // 计算文章字数
-    const wordCount = content.length
-    
+    // 创建新文章，字数会通过 pre('save') 中间件自动计算
     const article = new Article({
       title,
       content,
-      tags,
-      wordCount
+      tags
     })
     
     await article.save()
-    res.status(201).json(article)
+    
+    // 返回格式化的文章数据
+    const formattedArticle = {
+      id: article._id,
+      title: article.title,
+      content: article.content,
+      tags: article.tags || [],
+      wordCount: article.wordCount,
+      createdAt: article.createdAt.toISOString(),
+      updatedAt: article.updatedAt.toISOString()
+    }
+    
+    res.status(201).json({
+      code: 0,
+      data: formattedArticle,
+      message: '文章发布成功'
+    })
   } catch (error) {
     console.error('创建文章失败:', error)
-    res.status(500).json({ message: '服务器错误', error: error.message })
+    res.status(500).json({
+      code: -1,
+      message: '创建文章失败',
+      error: error.message
+    })
   }
 })
 
@@ -104,23 +148,44 @@ router.put('/:id', async (req, res) => {
   try {
     const { title, content, tags } = req.body
     
-    // 更新时重新计算字数
-    const wordCount = content.length
-    
-    const article = await Article.findByIdAndUpdate(
-      req.params.id, 
-      { title, content, tags, wordCount },
-      { new: true }
-    )
-    
+    // 查找并更新文章，字数会通过 pre('save') 中间件自动计算
+    const article = await Article.findById(req.params.id)
     if (!article) {
-      return res.status(404).json({ message: '文章不存在' })
+      return res.status(404).json({
+        code: -1,
+        message: '文章不存在'
+      })
     }
     
-    res.json(article)
+    article.title = title
+    article.content = content
+    article.tags = tags
+    
+    await article.save()
+    
+    // 返回格式化的文章数据
+    const formattedArticle = {
+      id: article._id,
+      title: article.title,
+      content: article.content,
+      tags: article.tags || [],
+      wordCount: article.wordCount,
+      createdAt: article.createdAt.toISOString(),
+      updatedAt: article.updatedAt.toISOString()
+    }
+    
+    res.json({
+      code: 0,
+      data: formattedArticle,
+      message: '文章更新成功'
+    })
   } catch (error) {
     console.error('更新文章失败:', error)
-    res.status(500).json({ message: '服务器错误', error: error.message })
+    res.status(500).json({
+      code: -1,
+      message: '更新文章失败',
+      error: error.message
+    })
   }
 })
 

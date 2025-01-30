@@ -12,8 +12,8 @@
       
       <!-- 简化标签显示区域 -->
       <div class="article-tags" v-if="article.tags?.length">
-        <el-tag
-          v-for="tag in article.tags"
+        <el-tag 
+          v-for="tag in article.tags" 
           :key="tag"
           size="small"
           class="tag-item"
@@ -27,12 +27,12 @@
       <div class="article-comments">
         <h3>评论</h3>
         <CommentForm 
-          :targetId="article._id"
+          :targetId="article.id"
           targetType="article"
           @submit-success="fetchComments"
         />
         <CommentList 
-          :targetId="article._id"
+          :targetId="article.id"
           targetType="article"
           ref="commentList"
         />
@@ -74,9 +74,12 @@ export default {
 
     const fetchArticle = async () => {
       try {
-        const id = route.params.id
-        const data = await articleApi.getDetail(id)
-        article.value = data
+        const response = await articleApi.getDetail(route.params.id)
+        if (response.code === 0 && response.data) {
+          article.value = response.data
+        } else {
+          throw new Error(response.message || '获取文章失败')
+        }
       } catch (error) {
         console.error('获取文章详情失败:', error)
       }

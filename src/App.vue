@@ -1,42 +1,108 @@
 <template>
-  <div class="app-container">
-    <nav class="nav-menu">
-      <div class="site-info">
-        <router-link to="/" class="logo">
-          Counting<br>
-          Stars💫
-        </router-link>
-        <p class="slogan">
-          🌩️🌩️🌩️莫思身外无穷事，<br>
-          且尽生前有限杯。
-        </p>
-      </div>
-      <router-link to="/daily" class="nav-link">日常</router-link>
-      <!-- <router-link to="/" class="nav-link">首页</router-link> -->
-      <router-link to="/archive" class="nav-link">归档</router-link>
-      <!-- <router-link to="/new-article" class="nav-link">发布</router-link> -->
-      <router-link to="/about" class="nav-link">关于</router-link>
-      <footer class="footer">
-        <p>© My Blog | Since 2024</p>
-      </footer>
-    </nav>
-    
-    <main class="main-content">
-      <div class="mobile-header">
-        <router-link to="/" class="mobile-logo">Counting Stars💫</router-link>
-        <div class="menu-toggle">✕ ☰ Menu</div>
-      </div>
-      <router-view></router-view>
-    </main>
+  <div v-if="isInitializing" class="initial-loading">
+    <div class="loading-content">
+      <el-icon class="is-loading"><Loading /></el-icon>
+      <span>加载中...</span>
+    </div>
   </div>
+  <template v-else>
+    <!-- 根据路由判断使用哪个布局 -->
+    <div v-if="isAdminRoute" class="admin-container">
+      <router-view></router-view>
+    </div>
+    <div v-else class="app-container">
+      <nav class="nav-menu">
+        <div class="site-info">
+          <router-link to="/" class="logo">
+            Counting<br>
+            Stars💫
+          </router-link>
+          <p class="slogan">
+            🌩️🌩️🌩️莫思身外无穷事，<br>
+            且尽生前有限杯。
+          </p>
+        </div>
+        <router-link to="/daily" class="nav-link">日常</router-link>
+        <!-- <router-link to="/" class="nav-link">首页</router-link> -->
+        <router-link to="/archive" class="nav-link">归档</router-link>
+        <!-- <router-link to="/new-article" class="nav-link">发布</router-link> -->
+        <router-link to="/about" class="nav-link">关于</router-link>
+        <footer class="footer">
+          <p>© My Blog | Since 2024</p>
+        </footer>
+      </nav>
+      
+      <main class="main-content">
+        <div class="mobile-header">
+          <router-link to="/" class="mobile-logo">Counting Stars💫</router-link>
+          <div class="menu-toggle">✕ ☰ Menu</div>
+        </div>
+        <router-view></router-view>
+      </main>
+      <el-button
+        class="admin-entry"
+        type="text"
+        @click="goToAdmin"
+      >
+        后台管理
+      </el-button>
+    </div>
+  </template>
+  <GlobalLoading ref="loadingRef" />
 </template>
 
 <script>
+import { computed, ref, provide, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import GlobalLoading from '@/components/GlobalLoading.vue'
+import { Loading } from '@element-plus/icons-vue'
+
 export default {
   name: 'App',
+  components: {
+    GlobalLoading,
+    Loading
+  },
   data() {
     return {
       isDevelopment: process.env.NODE_ENV === 'development'
+    }
+  },
+  setup() {
+    const route = useRoute()
+    const router = useRouter()
+    const loadingRef = ref(null)
+    const isInitializing = ref(true)
+
+    const isAdminRoute = computed(() => route.path.startsWith('/admin'))
+
+    // 提供全局加载方法
+    provide('globalLoading', {
+      show: () => loadingRef.value?.show(),
+      hide: () => loadingRef.value?.hide()
+    })
+
+    const goToAdmin = () => {
+      router.push('/admin')
+    }
+
+    // 初始化检查
+    onMounted(() => {
+      const token = localStorage.getItem('token')
+      if (isAdminRoute.value && !token && route.path !== '/admin/login') {
+        router.push('/admin/login')
+      }
+      // 延迟一小段时间再隐藏加载状态，确保路由已经准备好
+      setTimeout(() => {
+        isInitializing.value = false
+      }, 100)
+    })
+
+    return {
+      isAdminRoute,
+      goToAdmin,
+      loadingRef,
+      isInitializing
     }
   }
 }
@@ -349,5 +415,48 @@ p:lang(en),
     padding: 10px 20px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
+}
+
+.admin-entry {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+/* 后台布局样式 */
+.admin-container {
+  min-height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.initial-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #fff;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.loading-content .el-icon {
+  font-size: 32px;
+  color: #409eff;
+}
+
+.loading-content span {
+  font-size: 14px;
+  color: #606266;
 }
 </style>

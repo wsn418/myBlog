@@ -1,15 +1,16 @@
 const express = require('express')
 const router = express.Router()
-const Article = require('../models/article')
+const Article = require('../models/Article')
 
 // 测试路由
 router.get('/test', (req, res) => {
   res.json({ message: 'Archive route is working' })
 })
 
-// 归档数据路由
+// 获取归档数据
 router.get('/', async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store')
     console.log('Received archive request with query:', req.query)
     const { year, tag } = req.query
     let query = {}
@@ -61,7 +62,7 @@ router.get('/', async (req, res) => {
       count
     })).sort((a, b) => b.count - a.count)
     
-    // 按年份分组，不需要在响应中包含 content
+    // 按年份分组
     const archiveMap = {}
     articles.forEach(article => {
       const year = new Date(article.createdAt).getFullYear()
@@ -77,7 +78,7 @@ router.get('/', async (req, res) => {
         title: article.title,
         createdAt: article.createdAt,
         tags: Array.isArray(article.tags) ? article.tags : [],
-        wordCount: article.wordCount || 0  // 添加字数信息
+        wordCount: article.wordCount || 0
       })
       archiveMap[year].count++
     })
@@ -91,7 +92,7 @@ router.get('/', async (req, res) => {
       archives
     }
     
-    console.log('Sending response:', response)
+    console.log('Sending archive response')
     res.json(response)
   } catch (error) {
     console.error('获取归档数据失败:', error)

@@ -84,7 +84,24 @@ app.post('/api/articles', async (req, res) => {
 });
 
 // 启动服务器
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`服务器运行在端口 ${PORT}`);
-}); 
+const PORT = process.env.PORT || 3000;  // 修改为3000端口
+
+// 连接数据库并启动服务器
+const startServer = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/blog', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('数据库连接成功');
+    
+    app.listen(PORT, () => {
+      console.log(`服务器运行在端口 ${PORT}`);
+    });
+  } catch (error) {
+    console.error('服务器启动失败:', error);
+    process.exit(1);
+  }
+};
+
+startServer(); 

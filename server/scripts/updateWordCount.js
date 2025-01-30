@@ -1,49 +1,32 @@
 const mongoose = require('mongoose')
-const Article = require('../models/article')
+const Article = require('../models/Article')
 
 async function updateWordCount() {
   try {
-    await mongoose.connect('mongodb://127.0.0.1:27017/myblog', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    })
-    
+    await mongoose.connect('mongodb://127.0.0.1:27017/myblog')
     console.log('数据库连接成功')
-    
-    const articles = await Article.find({}).select('content wordCount')
-    let updated = 0
-    let batch = []
-    
+
+    const articles = await Article.find()
+    console.log(`找到 ${articles.length} 篇文章`)
+
     for (const article of articles) {
-      const newWordCount = article.content.length
-      if (article.wordCount !== newWordCount) {
-        batch.push({
-          updateOne: {
-            filter: { _id: article._id },
-            update: { $set: { wordCount: newWordCount } }
-          }
-        })
-      }
+      const text = article.content.replace(/<[^>]*>/g, '')
       
-      if (batch.length === 100) {
-        await Article.bulkWrite(batch)
-        updated += batch.length
-        console.log(`已更新 ${updated}/${articles.length} 篇文章`)
-        batch = []
-      }
+      // 统计中文字符、英文单词和数字
+      const chineseChars = text.match(/[\u4e00-\u9fa5]/g) || []
+      const words = text.match(/[a-zA-Z]+/g) || []
+      const numbers = text.match(/\d+/g) || []
+      
+      article.wordCount = chineseChars.length + words.length + numbers.length
+      await article.save()
+      console.log(`更新文章 ${article._id} 的字数: ${article.wordCount}`)
     }
-    
-    if (batch.length > 0) {
-      await Article.bulkWrite(batch)
-      updated += batch.length
-      console.log(`已更新 ${updated}/${articles.length} 篇文章`)
-    }
-    
+
     console.log('所有文章字数更新完成')
-    process.exit(0)
   } catch (error) {
     console.error('更新字数失败:', error)
-    process.exit(1)
+  } finally {
+    await mongoose.disconnect()
   }
 }
 
