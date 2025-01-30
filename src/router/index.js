@@ -75,6 +75,17 @@ const routes = [
         component: AdminArticles
       },
       {
+        path: 'articles/create',
+        name: 'CreateArticle',
+        component: () => import('@/views/admin/ArticleEdit.vue')
+      },
+      {
+        path: 'articles/edit/:id',
+        name: 'EditArticle',
+        component: () => import('@/views/admin/ArticleEdit.vue'),
+        props: true
+      },
+      {
         path: 'daily',
         name: 'AdminDaily',
         component: AdminDaily

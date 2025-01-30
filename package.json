@@ -19,6 +19,8 @@
     "element-plus": "^2.9.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
+    "markdown-it": "^14.1.0",
+    "md-editor-v3": "^5.2.1",
     "mongoose": "^8.9.5",
     "nprogress": "^0.2.0",
     "pinia": "^2.3.1",
@@ -29,6 +31,9 @@
   "devDependencies": {
     "@babel/core": "^7.12.16",
     "@babel/eslint-parser": "^7.12.16",
+    "@babel/plugin-transform-class-properties": "^7.25.9",
+    "@babel/plugin-transform-private-methods": "^7.25.9",
+    "@babel/plugin-transform-private-property-in-object": "^7.25.9",
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",

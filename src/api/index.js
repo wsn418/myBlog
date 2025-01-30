@@ -100,9 +100,7 @@ export const articleApi = {
   // 获取文章详情
   async getDetail(id) {
     try {
-      console.log('Fetching article detail for id:', id)
       const response = await api.get(`/articles/${id}`)
-      console.log('Article detail response:', response.data)
       return response.data
     } catch (error) {
       console.error('获取文章详情失败:', error)
@@ -110,10 +108,37 @@ export const articleApi = {
     }
   },
   
-  // 发布新文章
+  // 创建文章
   async create(data) {
-    const response = await api.post('/articles', data)
-    return response.data
+    try {
+      const response = await api.post('/articles', data)
+      return response.data
+    } catch (error) {
+      console.error('创建文章失败:', error)
+      throw error
+    }
+  },
+  
+  // 更新文章
+  async update(id, data) {
+    try {
+      const response = await api.put(`/articles/${id}`, data)
+      return response.data
+    } catch (error) {
+      console.error('更新文章失败:', error)
+      throw error
+    }
+  },
+  
+  // 删除文章
+  async delete(id) {
+    try {
+      const response = await api.delete(`/articles/${id}`)
+      return response.data
+    } catch (error) {
+      console.error('删除文章失败:', error)
+      throw error
+    }
   },
   
   // 获取标签统计

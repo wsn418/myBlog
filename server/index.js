@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const articlesRouter = require('./routes/articles');
 
 const app = express();
 
@@ -82,6 +83,9 @@ app.post('/api/articles', async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
+// 注册文章相关路由
+app.use('/api/articles', articlesRouter);
 
 // 启动服务器
 const PORT = process.env.PORT || 3000;  // 修改为3000端口

@@ -7,7 +7,7 @@
         <span class="word-count">字数：{{ article.wordCount }}</span>
       </div>
       <div class="article-content">
-        {{ article.content }}
+        <MdPreview :modelValue="article.content" :preview-theme="'github'" />
       </div>
       
       <!-- 简化标签显示区域 -->
@@ -48,12 +48,15 @@ import { useRouter, useRoute } from 'vue-router'
 import { articleApi } from '@/api'
 import CommentForm from './CommentForm.vue'
 import CommentList from './CommentList.vue'
+import { MdPreview } from 'md-editor-v3'
+import 'md-editor-v3/lib/preview.css'
 
 export default {
   name: 'ArticleDetail',
   components: {
     CommentForm,
-    CommentList
+    CommentList,
+    MdPreview
   },
   setup() {
     const router = useRouter()
@@ -154,5 +157,74 @@ export default {
   margin-bottom: 20px;
   font-weight: normal;
   color: #333;
+  margin-left: -2em;
+}
+
+/* 添加 Markdown 预览样式 */
+:deep(.markdown-body) {
+  background-color: transparent;
+  font-size: 16px !important;
+}
+
+:deep(.md-editor-preview) {
+  padding: 0 !important;
+}
+
+:deep(.markdown-body h1) {
+  font-size: 2em !important;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #eaecef;
+  margin-bottom: 16px;
+}
+
+:deep(.markdown-body h2) {
+  font-size: 1.5em !important;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #eaecef;
+  margin-bottom: 16px;
+}
+
+:deep(.markdown-body h3) {
+  font-size: 1.25em !important;
+}
+
+:deep(.markdown-body h4) {
+  font-size: 1em !important;
+}
+
+:deep(.markdown-body p) {
+  font-size: 16px !important;
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+
+:deep(.markdown-body ul),
+:deep(.markdown-body ol) {
+  font-size: 16px !important;
+  padding-left: 2em;
+  margin-bottom: 16px;
+}
+
+:deep(.markdown-body pre) {
+  margin: 16px 0;
+  padding: 16px;
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  font-size: 14px !important;
+}
+
+:deep(.markdown-body code) {
+  font-family: Consolas, Monaco, 'Andale Mono', monospace;
+  background-color: rgba(27,31,35,0.05);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 14px !important;
+}
+
+:deep(.markdown-body blockquote) {
+  margin: 16px 0;
+  padding: 0 1em;
+  color: #6a737d;
+  border-left: 0.25em solid #dfe2e5;
 }
 </style> 

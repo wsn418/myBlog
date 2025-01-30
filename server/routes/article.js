@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const Article = require('../models/Article')
+const { auth } = require('../middleware/auth')
 
 // 获取最近6篇文章 - 移到最前面
 router.get('/recent', async (req, res) => {
@@ -214,6 +215,29 @@ router.get('/tags', async (req, res) => {
   } catch (error) {
     console.error('获取标签统计失败:', error)
     res.status(500).json({ message: '服务器错误', error: error.message })
+  }
+})
+
+// 删除文章
+router.delete('/:id', async (req, res) => {
+  try {
+    const article = await Article.findByIdAndDelete(req.params.id)
+    if (!article) {
+      return res.status(404).json({
+        code: -1,
+        message: '文章不存在'
+      })
+    }
+    res.json({
+      code: 0,
+      message: '删除成功'
+    })
+  } catch (error) {
+    console.error('删除文章失败:', error)
+    res.status(500).json({
+      code: -1,
+      message: '删除文章失败'
+    })
   }
 })
 

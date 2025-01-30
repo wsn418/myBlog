@@ -47,8 +47,6 @@ export default {
   },
   computed: {
     articlePairs() {
-      if (!this.articles) return []
-      
       const pairs = []
       for (let i = 0; i < this.articles.length; i += 2) {
         pairs.push(this.articles.slice(i, i + 2))
@@ -60,17 +58,11 @@ export default {
     try {
       this.loading = true
       const response = await getRecentArticles()
-      console.log('Response in Home:', response)
-      if (response && response.articles) {
-        this.articles = response.articles
-      } else {
-        console.error('Invalid response format:', response)
-        throw new Error('获取文章数据格式错误')
-      }
+      console.log('Received articles:', response.articles)
+      this.articles = response.articles
     } catch (error) {
       console.error('Failed to fetch recent articles:', error)
-      this.error = error.message || '加载文章失败，请稍后重试'
-      this.articles = []
+      this.error = '加载文章失败，请稍后重试'
     } finally {
       this.loading = false
     }
@@ -143,6 +135,10 @@ export default {
 .article-title:hover {
   color: #000;
   border-bottom-style: solid;
+}
+
+.article-content {
+  margin-top: 10px;
 }
 
 .loading, .error, .no-data {

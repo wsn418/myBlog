@@ -229,27 +229,32 @@ export default {
   line-height: 1.6;
   margin: 8px 0;
   word-break: break-all;
+  margin-left: 52px;
 }
 
 .comment-actions, .reply-actions {
   margin-top: 8px;
+  margin-left: 52px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 :deep(.el-button--text) {
   padding: 0;
   height: auto;
   font-size: 12px;
-  color: #8590a6;
+  color: #1890ff;
+  margin-right: 8px;
 }
 
 :deep(.el-button--text:hover) {
-  color: #1890ff;
+  color: #40a9ff;
 }
 
 .reply-list {
   margin-top: 16px;
-  margin-left: 48px;
-  padding-left: 16px;
+  margin-left: 52px;
+  padding-left: 24px;
   border-left: 2px solid #f0f0f0;
 }
 
@@ -285,9 +290,7 @@ export default {
 }
 
 .reply-content {
-  margin: 8px 0;
-  font-size: 14px;
-  line-height: 1.6;
+  margin-left: 44px;
 }
 
 .reply-at {
@@ -297,7 +300,8 @@ export default {
 }
 
 .reply-actions {
-  margin-top: 4px;
+  margin-left: 44px;
+  margin-right: 8px;
 }
 
 .loading, .no-comments {

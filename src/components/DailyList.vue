@@ -193,6 +193,7 @@ export default {
   margin-bottom: 8px;
   white-space: pre-wrap;
   color: #333;
+  margin-left: 52px;
 }
 
 .action-icons {
