@@ -33,6 +33,28 @@
             show-word-limit
           />
         </el-form-item>
+        
+        <!-- 添加图片上传区域 -->
+        <el-form-item>
+          <div class="upload-area">
+            <el-upload
+              v-model:file-list="fileList"
+              action="/api/upload/image"
+              list-type="picture-card"
+              :multiple="true"
+              :limit="9"
+              :on-success="handleUploadSuccess"
+              :on-error="handleUploadError"
+              :before-upload="beforeUpload"
+            >
+              <el-icon><Plus /></el-icon>
+              <template #file="{ file }">
+                <img class="upload-image" :src="file.url" alt=""/>
+              </template>
+            </el-upload>
+          </div>
+        </el-form-item>
+        
         <el-form-item class="form-actions">
           <div class="action-buttons">
             <el-button circle>
@@ -55,14 +77,15 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { dailyApi } from '../api'
-import { Picture, Emoji } from '@element-plus/icons-vue'
+import { Picture, Emoji, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 export default {
   name: 'DailyForm',
   components: {
     Picture,
-    Emoji
+    Emoji,
+    Plus
   },
   setup() {
     const router = useRouter()
@@ -79,6 +102,35 @@ export default {
       return `${now.getHours()}小时前`
     })
 
+    const fileList = ref([])
+
+    const handleUploadSuccess = (response, uploadFile) => {
+      if (response.code === 0) {
+        uploadFile.url = response.data.url
+      } else {
+        ElMessage.error('图片上传失败')
+      }
+    }
+
+    const handleUploadError = () => {
+      ElMessage.error('图片上传失败')
+    }
+
+    const beforeUpload = (file) => {
+      const isImage = file.type.startsWith('image/')
+      const isLt2M = file.size / 1024 / 1024 < 2
+
+      if (!isImage) {
+        ElMessage.error('只能上传图片文件!')
+        return false
+      }
+      if (!isLt2M) {
+        ElMessage.error('图片大小不能超过 2MB!')
+        return false
+      }
+      return true
+    }
+
     const submitDaily = async () => {
       if (!form.value.content.trim() || !form.value.nickname.trim() || !form.value.email.trim() || isSubmitting.value) return
 
@@ -88,7 +140,8 @@ export default {
           content: form.value.content,
           nickname: form.value.nickname,
           email: form.value.email,
-          website: form.value.website
+          website: form.value.website,
+          images: fileList.value.map(file => file.url)
         })
         router.push('/daily')
       } catch (error) {
@@ -103,7 +156,11 @@ export default {
       form,
       isSubmitting,
       submitDaily,
-      postTime
+      postTime,
+      fileList,
+      handleUploadSuccess,
+      handleUploadError,
+      beforeUpload
     }
   }
 }
@@ -168,5 +225,26 @@ export default {
 :deep(.el-textarea__inner) {
   min-height: 120px !important;
   resize: none;
+}
+
+.upload-area {
+  margin-top: 16px;
+}
+
+:deep(.el-upload--picture-card) {
+  width: 100px;
+  height: 100px;
+  line-height: 100px;
+}
+
+:deep(.el-upload-list--picture-card .el-upload-list__item) {
+  width: 100px;
+  height: 100px;
+}
+
+.upload-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style> 

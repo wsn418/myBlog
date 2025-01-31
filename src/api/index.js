@@ -87,9 +87,19 @@ export const dailyApi = {
 
 export const articleApi = {
   // 获取文章列表
-  async getList() {
+  async getList(params) {
     try {
-      const response = await api.get('/articles')
+      const response = await api.get('/articles', { params })
+      // 如果后端直接返回数组，我们需要包装成预期的格式
+      if (Array.isArray(response.data)) {
+        return {
+          code: 0,
+          data: {
+            list: response.data,
+            total: response.data.length
+          }
+        }
+      }
       return response.data
     } catch (error) {
       console.error('获取文章列表失败:', error)
@@ -145,6 +155,17 @@ export const articleApi = {
   async getTags() {
     const response = await api.get('/articles/tags')
     return response.data
+  },
+  
+  // 获取所有标签
+  async getAllTags() {
+    try {
+      const response = await api.get('/articles/tags')
+      return response.data
+    } catch (error) {
+      console.error('获取标签列表失败:', error)
+      throw error
+    }
   }
 }
 
@@ -254,3 +275,47 @@ export const logout = () => {
 }
 
 export default api 
+
+// 获取日常列表
+export const getDailyList = (params) => {
+  console.log('Requesting daily list with params:', params);
+  return api.get('/admin/daily', { params }).then(response => {
+    console.log('Daily list response:', response);
+    return response;
+  }).catch(error => {
+    console.error('Daily list error:', error);
+    throw error;
+  });
+}
+
+// 创建日常
+export const createDaily = (data) => {
+  return api.post('/admin/daily', data)
+}
+
+// 更新日常
+export const updateDaily = (id, data) => {
+  return api.put(`/admin/daily/${id}`, data)
+}
+
+// 删除日常
+export const deleteDaily = (id) => {
+  return api.delete(`/admin/daily/${id}`)
+}
+
+// 批量删除日常
+export const batchDeleteDaily = (ids) => {
+  return api.delete('/admin/daily/batch', { data: { ids } })
+}
+
+// 上传图片
+export const uploadImage = (file) => {
+  const formData = new FormData()
+  formData.append('image', file)
+  
+  return api.post('/upload/image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+} 

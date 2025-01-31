@@ -3,99 +3,89 @@ const router = express.Router()
 const Daily = require('../models/Daily')
 const mongoose = require('mongoose')
 
-// 获取动态列表
+// 获取日常列表
 router.get('/', async (req, res) => {
   try {
-    res.set('Cache-Control', 'no-store')
-    console.log('Fetching daily list - Start')
-    
-    // 检查数据库连接状态
-    console.log('Database connection state:', mongoose.connection.readyState)
-    if (!mongoose.connection.readyState) {
-      throw new Error('Database not connected')
-    }
+    const dailyList = await Daily.aggregate([
+      {
+        $lookup: {
+          from: 'comments',
+          let: { dailyId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$targetId', { $toString: '$$dailyId' }] },
+                    { $eq: ['$targetType', 'daily'] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: 'comments'
+        }
+      },
+      {
+        $addFields: {
+          commentCount: { $size: '$comments' },
+          id: { $toString: '$_id' }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          id: 1,
+          content: 1,
+          nickname: 1,
+          email: 1,
+          avatar: 1,
+          images: 1,
+          location: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          commentCount: 1
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      }
+    ])
 
-    // 检查 Daily 模型是否正确注册
-    console.log('Daily model:', Daily.modelName)
-    
-    // 尝试获取一条记录来测试
-    const count = await Daily.countDocuments()
-    console.log('Total daily records:', count)
-    
-    const dailyList = await Daily.find()
-      .sort({ createdAt: -1 })
-      .lean()
-      .exec()
-
-    console.log('Query executed successfully')
-
-    // 如果没有数据，返回空数组
-    if (!dailyList || dailyList.length === 0) {
-      console.log('No daily records found')
-      return res.json({
-        code: 0,
-        data: []
-      })
-    }
-
-    // 格式化日期
+    // 格式化日期，添加错误处理
     const formattedList = dailyList.map(item => {
-      console.log('Processing item:', item._id)
       try {
-        // 安全地处理日期
-        let createdAt = item.createdAt
-        if (!(createdAt instanceof Date)) {
-          createdAt = new Date(createdAt)
-        }
-        if (isNaN(createdAt.getTime())) {
-          console.warn('Invalid date for item:', item._id)
-          createdAt = new Date() // 使用当前时间作为后备
-        }
-        
+        const createdAt = item.createdAt ? new Date(item.createdAt) : new Date()
+        const updatedAt = item.updatedAt ? new Date(item.updatedAt) : createdAt
+
         return {
           ...item,
-          id: item._id,
-          createdAt: createdAt.toISOString()
+          createdAt: createdAt instanceof Date && !isNaN(createdAt) 
+            ? createdAt.toISOString() 
+            : new Date().toISOString(),
+          updatedAt: updatedAt instanceof Date && !isNaN(updatedAt)
+            ? updatedAt.toISOString()
+            : new Date().toISOString()
         }
       } catch (err) {
-        console.warn('Error processing item:', item._id, err)
+        console.warn('日期格式化错误:', err, 'item:', item)
         return {
           ...item,
-          id: item._id,
-          createdAt: new Date().toISOString() // 使用当前时间作为后备
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
       }
     })
 
-    console.log(`Found ${formattedList.length} daily items`)
     res.json({
       code: 0,
       data: formattedList
     })
   } catch (error) {
-    console.error('获取动态列表失败 - 详细错误:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    })
-    
-    // 检查是否是 MongoDB 错误
-    if (error instanceof mongoose.Error) {
-      console.error('MongoDB specific error:', {
-        errorType: error.constructor.name,
-        modelName: error.model?.modelName,
-        collection: error.model?.collection?.name
-      })
-    }
-    
+    console.error('获取日常列表失败:', error)
     res.status(500).json({
       code: -1,
-      message: '获取列表失败',
-      error: {
-        message: error.message,
-        type: error.name,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      }
+      message: '获取日常列表失败'
     })
   }
 })

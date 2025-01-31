@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const config = require('../config');
 
 // 登录接口
 router.post('/login', async (req, res) => {
@@ -51,8 +52,8 @@ router.post('/login', async (req, res) => {
         role: user.role,
         username: user.username
       },
-      'your-jwt-secret-key',
-      { expiresIn: '24h' }
+      config.JWT_SECRET,
+      { expiresIn: config.jwtExpire }
     );
 
     console.log('Generated token:', token);

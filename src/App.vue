@@ -39,13 +39,6 @@
         </div>
         <router-view></router-view>
       </main>
-      <el-button
-        class="admin-entry"
-        type="text"
-        @click="goToAdmin"
-      >
-        后台管理
-      </el-button>
     </div>
   </template>
   <GlobalLoading ref="loadingRef" />

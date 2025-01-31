@@ -4,6 +4,7 @@ const cors = require('cors')
 const path = require('path')
 const connectDB = require('./config/db')
 const authRoutes = require('./routes/auth')
+const fs = require('fs')
 
 // 导入路由
 const dailyRoutes = require('./routes/daily')
@@ -11,6 +12,7 @@ const articleRoutes = require('./routes/article')
 const commentRoutes = require('./routes/comment')
 const archiveRoutes = require('./routes/archive')
 const adminRoutes = require('./routes/admin')
+const uploadRoutes = require('./routes/upload')
 
 const app = express()
 
@@ -26,7 +28,7 @@ connectDB()
 
 // CORS 配置
 app.use(cors({
-  origin: 'http://localhost:8080', // 只允许前端开发服务器
+  origin: 'http://localhost:8080',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -55,6 +57,58 @@ app.use((req, res, next) => {
   next()
 })
 
+// 确保上传目录存在
+const uploadDir = path.join(__dirname, 'uploads')
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true })
+}
+
+// 静态文件服务配置 - 移到路由注册之前
+const uploadsPath = path.join(__dirname, 'uploads')
+console.log('静态文件目录路径:', uploadsPath)
+app.use('/uploads', express.static(uploadsPath))
+
+// 测试路由 - 移到这里
+app.get('/test-uploads', (req, res) => {
+  try {
+    const imagesPath = path.join(uploadsPath, 'images')
+    const files = fs.readdirSync(imagesPath)
+    res.json({
+      uploadsPath,
+      imagesPath,
+      files,
+      exists: fs.existsSync(imagesPath)
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+      stack: error.stack
+    })
+  }
+})
+
+// 添加路径日志
+app.use((req, res, next) => {
+  console.log('请求路径:', req.path)
+  console.log('完整URL:', req.url)
+  console.log('静态文件目录:', path.join(__dirname, 'uploads'))
+  next()
+})
+
+// 添加详细的请求日志
+app.use((req, res, next) => {
+  console.log({
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.url,
+    path: req.path,
+    query: req.query,
+    headers: req.headers,
+    body: req.body
+  })
+  next()
+})
+
 // 注册路由
 app.use('/api/articles', articleRoutes)
 app.use('/api/daily', dailyRoutes)
@@ -62,6 +116,7 @@ app.use('/api/comments', commentRoutes)
 app.use('/api/archive', archiveRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/upload', uploadRoutes)
 
 // 测试路由
 app.get('/api/test', (req, res) => {
@@ -109,4 +164,4 @@ app.listen(PORT, () => {
   console.log(`服务器运行在端口 ${PORT}`)
 })
 
-module.exports = app 
+module.exports = app

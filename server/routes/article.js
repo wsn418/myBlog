@@ -67,39 +67,54 @@ router.get('/', async (req, res) => {
   }
 })
 
+// 获取所有标签列表
+router.get('/tags', async (req, res) => {
+  try {
+    // 使用聚合管道获取所有不重复的标签
+    const tags = await Article.aggregate([
+      { $unwind: '$tags' },  // 展开标签数组
+      { $group: { _id: '$tags' } },  // 按标签分组
+      { $sort: { _id: 1 } }  // 按字母顺序排序
+    ])
+    
+    // 提取标签值并返回
+    const tagList = tags.map(tag => tag._id)
+    
+    res.json({
+      code: 0,
+      data: tagList,
+      message: '获取标签列表成功'
+    })
+  } catch (error) {
+    console.error('获取标签列表失败:', error)
+    res.status(500).json({
+      code: -1,
+      message: '获取标签列表失败',
+      error: error.message
+    })
+  }
+})
+
 // 获取文章详情
 router.get('/:id', async (req, res) => {
   try {
-    res.set('Cache-Control', 'no-store')
-    
-    const article = await Article.findById(req.params.id).lean()
+    const article = await Article.findById(req.params.id)
     if (!article) {
       return res.status(404).json({
         code: -1,
         message: '文章不存在'
       })
     }
-    
-    // 格式化数据
-    const formattedArticle = {
-      id: article._id,
-      title: article.title,
-      content: article.content,
-      tags: article.tags || [],
-      wordCount: article.wordCount || 0,
-      createdAt: new Date(article.createdAt).toISOString(),
-      updatedAt: new Date(article.updatedAt).toISOString()
-    }
-    
     res.json({
       code: 0,
-      data: formattedArticle
+      data: article
     })
   } catch (error) {
     console.error('获取文章详情失败:', error)
     res.status(500).json({
       code: -1,
-      message: '获取文章详情失败'
+      message: '获取文章详情失败',
+      error: error.message
     })
   }
 })
@@ -187,34 +202,6 @@ router.put('/:id', async (req, res) => {
       message: '更新文章失败',
       error: error.message
     })
-  }
-})
-
-// 获取标签统计
-router.get('/tags', async (req, res) => {
-  try {
-    const articles = await Article.find().select('tags')
-    const tagMap = {}
-    
-    articles.forEach(article => {
-      if (Array.isArray(article.tags)) {
-        article.tags.forEach(tag => {
-          if (tag) {
-            tagMap[tag] = (tagMap[tag] || 0) + 1
-          }
-        })
-      }
-    })
-    
-    const tags = Object.entries(tagMap).map(([name, count]) => ({
-      name,
-      count
-    })).sort((a, b) => b.count - a.count)
-    
-    res.json({ tags })
-  } catch (error) {
-    console.error('获取标签统计失败:', error)
-    res.status(500).json({ message: '服务器错误', error: error.message })
   }
 })
 

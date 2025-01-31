@@ -67,21 +67,6 @@
                   </span>
                 </div>
               </el-popover>
-              <el-upload
-                action="/api/upload"    
-                :show-file-list="false"
-                :on-success="handleImageSuccess"
-                accept="image/*"
-                class="upload-btn"
-                @click.stop
-              >
-                <el-button 
-                  class="tool-btn"
-                  @click.stop
-                >
-                  <el-icon class="tool-icon"><PictureFilled /></el-icon>
-                </el-button>
-              </el-upload>
             </div>
             <div class="right-tools">
               <span class="word-count">{{ content.length }}/500</span>
@@ -103,14 +88,12 @@
 <script>
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
-import { PictureFilled, UserFilled } from '@element-plus/icons-vue';
+import { UserFilled } from '@element-plus/icons-vue';
 import { commentApi } from '../api';
 
 export default {
   name: 'CommentForm',
   components: {
-    // FaceSmilingFilled,
-    PictureFilled,
     UserFilled
   },
   props: {
@@ -154,11 +137,6 @@ export default {
 
     const insertEmoji = (emoji) => {
       content.value += emoji;
-    };
-
-    const handleImageSuccess = (res) => {
-      const imageUrl = res.url;
-      content.value += `![图片](${imageUrl})`;
     };
 
     const submitComment = async () => {
@@ -209,7 +187,6 @@ export default {
       emojiList,
       handleEmailBlur,
       insertEmoji,
-      handleImageSuccess,
       submitComment
     };
   }
@@ -406,11 +383,7 @@ export default {
 }
 
 .upload-btn {
-  display: inline-block;
-}
-
-.upload-btn :deep(.el-upload) {
-  display: block;
+  display: none;
 }
 
 .reply-info {

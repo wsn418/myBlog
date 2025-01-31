@@ -20,7 +20,6 @@ NProgress.configure({
 const AdminLayout = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Layout.vue');
 const AdminDashboard = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Dashboard.vue');
 const AdminArticles = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Articles.vue');
-const AdminDaily = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Daily.vue');
 const AdminTags = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Tags.vue');
 const AdminLogin = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Login.vue');
 
@@ -88,8 +87,11 @@ const routes = [
       },
       {
         path: 'daily',
-        name: 'AdminDaily',
-        component: AdminDaily
+        component: () => import('@/views/admin/daily/DailyList.vue'),
+        meta: {
+          title: '日常管理',
+          requiresAuth: true
+        }
       },
       {
         path: 'tags',

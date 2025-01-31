@@ -7,24 +7,21 @@ if (mongoose.models.Daily) {
   const dailySchema = new mongoose.Schema({
     content: {
       type: String,
-      required: true,
-      trim: true
+      required: true
     },
-    nickname: {
-      type: String,
-      required: true,
-      trim: true
+    images: {
+      type: [String],
+      default: []
     },
-    email: {
+    location: {
       type: String,
-      required: true,
-      trim: true
-    },
-    avatar: {
-      type: String,
-      default: 'https://example.com/default-avatar.png'
+      default: ''
     },
     createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    updatedAt: {
       type: Date,
       default: Date.now
     }
@@ -37,6 +34,14 @@ if (mongoose.models.Daily) {
   // 添加虚拟字段
   dailySchema.virtual('id').get(function() {
     return this._id.toHexString()
+  })
+
+  // 更新时自动更新 updatedAt 字段
+  dailySchema.pre('save', function(next) {
+    if (this.isModified()) {
+      this.updatedAt = new Date()
+    }
+    next()
   })
 
   const Daily = mongoose.model('Daily', dailySchema)

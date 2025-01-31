@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../config');
+const config = require('../config');
 
 const auth = (req, res, next) => {
   try {
@@ -12,16 +12,18 @@ const auth = (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, config.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
     console.error('认证失败:', error);
     res.status(401).json({
       code: -1,
-      message: '认证失败'
+      message: '认证失败，请重新登录',
+      error: error.message,
+      type: error.name
     });
   }
 };
 
-module.exports = { auth }; 
+module.exports = auth; 
